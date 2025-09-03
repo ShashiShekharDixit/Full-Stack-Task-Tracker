@@ -1,58 +1,57 @@
-// App.js
 import React, { useState, useEffect } from "react";
 import "./app.css";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts"; // ✅ recharts for graph
 
 export default function App() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem("tasks");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [newTask, setNewTask] = useState("");
 
-  // Fetch tasks from server
   useEffect(() => {
-    fetch("http://localhost:8080/api/tasks")
-      .then((res) => res.json())
-      .then((data) => setTasks(data))
-      .catch((err) => console.error("Error fetching tasks:", err));
-  }, []);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
 
   // Add a task
-  const addTask = async () => {
+  const addTask = () => {
     if (!newTask.trim()) return;
-
-    const res = await fetch("http://localhost:8080/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: newTask }),
-    });
-
-    const createdTask = await res.json();
-    setTasks([...tasks, createdTask]);
+    setTasks([...tasks, { id: Date.now(), text: newTask, done: false }]);
     setNewTask("");
   };
 
-  // Toggle task
-  const toggleTask = async (id) => {
-    const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
-      method: "PUT",
-    });
-
-    const data = await res.json();
-    setTasks(data.tasks);
+  // Toggle task completion
+  const toggleTask = (id) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, done: !task.done } : task
+      )
+    );
   };
 
-  // Delete task
-  const deleteTask = async (id) => {
-    const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
-      method: "DELETE",
-    });
-
-    const data = await res.json();
-    setTasks(data.tasks);
+  // Delete a task
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
   };
+
+  // Progress calculation
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.done).length;
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Data for Pie Chart
+  const chartData = [
+    { name: "Completed", value: completedTasks },
+    { name: "Pending", value: totalTasks - completedTasks },
+  ];
+  const COLORS = ["#4caf50", "#f44336"];
 
   return (
     <div className="app">
-      <h1>✅ Task Tracker</h1>
+      <h1>✅ Task Tracker with Progress</h1>
 
+      {/* Input Section */}
       <div className="task-input">
         <input
           type="text"
@@ -63,6 +62,7 @@ export default function App() {
         <button onClick={addTask}>Add Task</button>
       </div>
 
+      {/* Task List */}
       <ul className="task-list">
         {tasks.length === 0 ? (
           <p>No tasks yet. Add one above!</p>
@@ -75,6 +75,38 @@ export default function App() {
           ))
         )}
       </ul>
+
+      {/* Progress Bar */}
+      <div className="progress-container">
+        <p>
+          Progress: {completedTasks}/{totalTasks} tasks ({progress}%)
+        </p>
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+        </div>
+      </div>
+
+      {/* Graph */}
+      <div className="chart-container">
+        <h2>📊 Work Progress</h2>
+        <PieChart width={300} height={250}>
+          <Pie
+            data={chartData}
+            cx={150}
+            cy={120}
+            labelLine={false}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </div>
     </div>
   );
 }
