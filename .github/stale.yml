@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <name>Task Tracker App</name>
+  <description>
+    A simple full-stack Task Tracker built with React (frontend) and Express (backend).
+    Users can add, update, and delete daily tasks with a clean UI.
+  </description>
+  <version>1.0.0</version>
+  <author>Shashi Shekhar Dixit</author>
+  <license>MIT</license>
+
+  <frontend>
+    <framework>React</framework>
+    <entry>src/index.js</entry>
+    <port>3000</port>
+    <build>npm run build</build>
+  </frontend>
+
+  <backend>
+    <framework>Express</framework>
+    <entry>server.js</entry>
+    <port>8080</port>
+    <apiBase>/api</apiBase>
+  </backend>
+
+  <endpoints>
+    <endpoint method="GET" path="/api/tasks" description="Fetch all tasks" />
+    <endpoint method="POST" path="/api/tasks" description="Add a new task" />
+    <endpoint method="PUT" path="/api/tasks/:id" description="Toggle task completion" />
+    <endpoint method="DELETE" path="/api/tasks/:id" description="Delete a task" />
+  </endpoints>
+</application>
